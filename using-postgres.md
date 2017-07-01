@@ -3,9 +3,9 @@ Right now, we use Postgres to store everything.  Let's not get into why.
 
 Permissions are a little tricky because the node-postgres (pg) module
 wants to talk to the server over the network, even when you're on the
-same host.  Here's one way to set it up.  If you know your way around
-Postgres, you can probably improve on the below process.  If not,
-hopefully this works.
+same host (at least on recent Ubuntu distributions).  Here's one way
+to set it up.  If you know your way around Postgres, you can probably
+improve on the below process.  If not, hopefully this works.
 
 ### Install Postgres
 
