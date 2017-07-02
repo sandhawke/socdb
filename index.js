@@ -37,47 +37,39 @@ function client () {
         if (e) {
           reject(e)
         } else {
-          resolve(body)
+          debug('request completed with status', r.statusCode, r.statusMessage)
+          if (r.statusCode > 299) {
+            reject(body)
+          } else {
+            resolve(body)
+          }
         }
       })
     })
   }
     
-  socdb.fetchUser = (userspec) => {
+  socdb.fetchUser = (screen_name) => {
     debug('fetchUser', userspec)
-    get('users/show.json', {screen_name: userspec})
+    get('users/show.json', {screen_name})
       .then(body => {
         console.log('body', body)
       })
   }
   
-  /*
-  const fetchTimeline = (uid) => {
-    debug('fetchTimeline', uid) // limits?
+  socdb.fetchTimeline = (screen_name) => {
+    debug('fetchTimeline', screen_name) 
     
-    const myDefaults = {
-      user_id: uid,
+    const qs = {
+      screen_name,
       count: 200,
       trim_user: false,
       exclude_replies: false,
       include_rts: true
     }
-    Object.assign(myDefaults, opts)
-    debug('args', myDefaults)
-    const options = {
-      uri: '/statuses/user_timeline' + base....,
-      qs: { foo:bar  }
-      json: true
-      //     resolveWithFullResponse: true    //  <---  <---  <---  <--- 
-        
-    }
-    return rp(options)
-    return (
-      promiseGet('/statuses/user_timeline', myDefaults)
-        .then(savePosts)
-    )
+    // Object.assign(myDefaults, opts)   max_id, start_at, user_id
+    debug('args', qs)
+    return get('statuses/user_timeline', qs)
   }
-  */
 
   return socdb
 }

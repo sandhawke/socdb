@@ -19,19 +19,41 @@ new Tilda({
   examples: [ ]
 }, {
   stdin: true
-}).action([
-  {
-    name: 'fetch-user',
-    desc: 'fetch and display information about a user',
-    args: [{
-      name: "user",
-      type: String,
-      desc: 'user id, screen_name, or profile URL',
-      stdin: true
-    }]
-  }
-]).on('fetch-user', action => {
-  console.log('action.args', action.args)
-  socdb.fetchUser(action.args.user)
 })
+  .action([
+    {
+      name: 'fetch-user',
+      desc: 'fetch and display information about a user',
+      args: [{
+        name: "user",
+        type: String,
+        desc: 'user id, screen_name, or profile URL',
+        stdin: true
+      }]
+    }
+  ]).on('fetch-user', action => {
+    console.log('action.args', action.args)
+    socdb.fetchUser(action.args.user)
+  })
+
+  .action([
+    {
+      name: 'fetch-timeline',
+      desc: 'fetch and display timeline for a user',
+      args: [{
+        name: "user",
+        type: String,
+        desc: 'user id, screen_name, or profile URL',
+        stdin: true
+      }]
+    }
+  ]).on('fetch-timeline', action => {
+    console.log('action.args', action.args)
+    socdb.fetchTimeline(action.args.user)
+      .then(items => {
+        for (let i of items) {
+          console.log(i.text)
+        }
+      })
+  })
 
