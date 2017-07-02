@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "use social media as a database, sort of",
   "main": "index.js",
+  "bin": "bin/socdb",
   "scripts": {
     "test": "standard && tap test/[a-z]*.js",
     "release": "npm version patch && git push --follow-tags && npm publish"
@@ -22,5 +23,12 @@
   "bugs": {
     "url": "https://github.com/sandhawke/social-db/issues"
   },
-  "homepage": "https://github.com/sandhawke/social-db#readme"
+  "homepage": "https://github.com/sandhawke/social-db#readme",
+  "dependencies": {
+    "debug": "^2.6.8",
+    "request": "^2.81.0",
+    "request-promise-native": "^1.0.4",
+    "sql-template-strings": "^2.2.2",
+    "tilda": "^4.4.10"
+  }
 }

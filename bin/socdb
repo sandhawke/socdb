@@ -1,0 +1,37 @@
+#!/usr/bin/env node   
+'use strict' //  -*-mode: js2 -*- 
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error(process.argv[1], 'Unhandled Rejection at: Promise', p, 'reason:', reason);
+  process.exit()
+});
+
+const Tilda = require('tilda')
+const socdb = require('..')
+
+// https://github.com/IonicaBizau/tilda
+
+new Tilda({
+  name: 'socdb',
+  version: require('../package').version,
+  description: '@@@',
+  documentation: '@@@',
+  examples: [ ]
+}, {
+  stdin: true
+}).action([
+  {
+    name: 'fetch-user',
+    desc: 'fetch and display information about a user',
+    args: [{
+      name: "user",
+      type: String,
+      desc: 'user id, screen_name, or profile URL',
+      stdin: true
+    }]
+  }
+]).on('fetch-user', action => {
+  console.log('action.args', action.args)
+  socdb.fetchUser(action.args.user)
+})
+

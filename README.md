@@ -13,9 +13,11 @@ Initial platform targets:
 
 ## Command line
 
+
 ```
+sudo apt-get install -y postgresql    # or something like that
 npm install -g socdb
-socdb init
+sudo socdb setup-postgres  # creates database user "socdb" w/random pw, etc
 ```
 
 ```
