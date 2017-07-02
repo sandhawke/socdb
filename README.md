@@ -1,4 +1,4 @@
-socdb -- a decentralized database running over social networks
+## socdb: a decentralized database, running over social networks
 
 Very much in-progress
 
