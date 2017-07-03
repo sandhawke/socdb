@@ -28,9 +28,14 @@
     "debug": "^2.6.8",
     "fastpriorityqueue": "^0.3.0",
     "long": "^3.2.0",
+    "pg": "^6.4.0",
     "request": "^2.81.0",
     "request-promise-native": "^1.0.4",
     "sql-template-strings": "^2.2.2",
     "tilda": "^4.4.10"
+  },
+  "devDependencies": {
+    "tap": "^10.7.0",
+    "tape": "^4.7.0"
   }
 }
