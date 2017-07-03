@@ -10,6 +10,28 @@ making that work well.
 Initial platform targets:
 * Twitter, for being well-known and fairly open
 * Mastodon, for being open source, decentralized, customizable
+* (maybe a made-up thing, for when we want performance)
+
+## Client Library (sketch)
+
+```js
+const socdb = require('socdb')
+
+socdb.useSchema('...')   // defines 'moves' as a table/collection
+...
+socdb.moves.add({player: 'X', position: 5})
+...
+socdb.moves.on('change', movesArray => { ... })
+socdb.moves.on('appear', newMove => { ... })
+   socdb.moves.on('disappear', oldMoveID? => { ... })
+   (or this is an event on the newMove obj)
+
+# aka:
+
+const moves = socdb.view(someSchema)
+```
+
+Use toDoItem instead?
 
 ## Command line
 

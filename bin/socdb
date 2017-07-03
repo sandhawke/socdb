@@ -7,6 +7,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 const Tilda = require('tilda')
+const Budget = require('resource-budget')
 const socdb = require('..')
 
 // https://github.com/IonicaBizau/tilda
@@ -45,15 +46,33 @@ new Tilda({
         type: String,
         desc: 'user id, screen_name, or profile URL',
         stdin: true
+      }],
+      options: [{
+        opts: ['objects'],
+        desc: 'est how many objects to load',
+        type: Number,
+        default: 1000
+      },{
+        opts: ['fetches'],
+        desc: 'est how fetches to perform',
+        type: Number,
+        default: 3
       }]
     }
   ]).on('fetch-timeline', action => {
     console.log('action.args', action.args)
-    socdb.fetchTimeline(action.args.user)
+    const budget = new Budget({
+      objects: action.options.objects.value,
+      fetches: action.options.fetches.value
+    })
+    console.log('budget', budget)
+    socdb.fetchTimeline(action.args.user, budget)
       .then(items => {
-        for (let i of items) {
-          console.log(i.text)
-        }
+        console.log('fetched', items.length, 'items')
+        console.log('budget left at', budget)
+        //for (let i of items) {
+        //  console.log(i.text)
+        //}
       })
   })
 
