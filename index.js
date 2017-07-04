@@ -54,6 +54,10 @@ class SocDB extends EventEmitter {
     return Promise.all(all)
   }
 
+  start () {
+    this.startInProcessFetchers()
+  }
+  
   startInProcessFetchers () {
     this.boss = new FetchBoss(this)
     this.fetcher = new Fetcher(this, this.boss)
@@ -73,7 +77,39 @@ class SocDB extends EventEmitter {
         debug('pool end resolved')
       })
   }
+
+  loadUser (twid) {
+    // have a ram version of this!
+    return (
+      this.query(SQL`SELECT * FROM twitter_users WHERE twid=${twid}`)
+        .then(res => {
+          return res.rows[0]
+        })
+    )
+  }
+
+  loadAuth (twid) {
+    console.assert(twid)
+    debug('loadAuth twid', twid, SQL`${twid}`)
+    return (
+      this.query(SQL`SELECT token, token_secret FROM auth 
+                     WHERE service='twitter' AND id_str=${twid}`)
+        .then(res => {
+          debug('auth results', res)
+          for (let row of res.rows) {
+            const auth = {
+              twitter_primary_access_token_key: row.token,
+              twitter_primary_access_token_secret: row.token_secret
+            }
+            // eh, just use the first one for now I guess
+            debug('returning auth', auth)
+            return auth
+          }
+        })
+    )
+  }
 }
+
 
 let dbCounter = 1
 function tempDB () {
@@ -94,7 +130,10 @@ function tempDB () {
     }
   }
 
-  process.on('exit', close)
+  // can't use process.on('exit', ...) because that's only for sync stuff
+  // process.on('SIGINT', close)
+  //    eh, postgres complains because pool is using it.
+  
   debug('creating temp database', dbname)
   return new Promise((resolve, reject) => {
     client.connect(err => {
