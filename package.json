@@ -26,6 +26,7 @@
   "homepage": "https://github.com/sandhawke/social-db#readme",
   "dependencies": {
     "debug": "^2.6.8",
+    "eventemitter3": "^2.0.3",
     "fastpriorityqueue": "^0.3.0",
     "json-stable-stringify": "^1.0.1",
     "long": "^3.2.0",

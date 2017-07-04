@@ -1,13 +1,15 @@
 'use strict'
 
 const debug = require('debug')('socdb')
+const EventEmitter = require('eventemitter3')
 const pgPool = require('./lib/pg_pool')
 const Fetcher = require('./lib/fetcher')
 const FetchBoss = require('./lib/fetchboss')
 const secret = require('./.secret')
 
-class SocDB {
+class SocDB extends EventEmitter {
   constructor () {
+    super()
     debug('socdb instance created')
     this.query = pgPool.query
     this.SQL = pgPool.SQL
@@ -22,7 +24,11 @@ class SocDB {
   startInProcessFetchers () {
     this.boss = new FetchBoss(this)
     this.fetcher = new Fetcher(this, this.boss)
-    this.fetcher.run()
+    this.fetcher.start()
+  }
+
+  stopFetchers () {
+    this.fetcher.stop()
   }
 }
 
