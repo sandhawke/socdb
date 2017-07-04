@@ -9,6 +9,8 @@ CREATE TABLE twitter_users (
   screen_name varchar,
   fetched_at timestamp without time zone NOT NULL,
   posts_earlier_url varchar,
+  posts_earlier_count int default 0,
+  posts_earlier_complete boolean default false,
   posts_later_url varchar,
   likes_earlier_url varchar,
   likes_later_url varchar
