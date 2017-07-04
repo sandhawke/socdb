@@ -83,7 +83,13 @@ class SocDB extends EventEmitter {
     return (
       this.query(SQL`SELECT * FROM twitter_users WHERE twid=${twid}`)
         .then(res => {
-          return res.rows[0]
+          debug('twitter_users', twid, 'rowCount=', res.rowCount)
+          if (res.rowCount) {
+            const user = res.rows[0]
+            // user.twid = user.id_str
+            return user
+          }
+          return null
         })
     )
   }

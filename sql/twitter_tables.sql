@@ -8,10 +8,10 @@ CREATE TABLE twitter_users (
   twid bigint PRIMARY KEY,
   screen_name varchar,
   fetched_at timestamp without time zone NOT NULL,
-  posts_next_max_id bigint,
-  posts_next_since_id bigint,
-  likes_next_max_id bigint,
-  likes_next_since_id bigint
+  posts_earlier_url varchar,
+  posts_later_url varchar,
+  likes_earlier_url varchar,
+  likes_later_url varchar
 );
 
 CREATE TABLE twitter_posts (

@@ -14,7 +14,7 @@ test('load current tweets', t => {
   socdb.tempDB()
     .then(db => {
 
-      const secret = require('../.testuser-secret')
+      const secret = require('../.sandhawke-secret')
       db.query(secret)
         .then(() => {
           db.query('INSERT INTO twitter_users (twid, fetched_at) VALUES (23556190, now())')
