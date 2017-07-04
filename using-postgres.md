@@ -32,13 +32,13 @@ echo export PGHOST=localhost PGUSER=social PGDATABASE=social PGPASSWORD=$GEN > .
 ### Tell Postgres to allow localhost connections
 
 ```
-echo 'host social social 127.0.0.1/32 password' | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
+echo 'host all social 127.0.0.1/32 password' | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
 sudo /etc/init.d/postgresql restart
 ```
 
-The first "social" is the table name, the second is the user name.
-Here, we're only allowing access from localhost, authenticated by the
-user's password.
+We're only allowing access from localhost for the user "social",
+authenticated by that user account's password (which we just set
+above).
 
 ### Try it out
 
