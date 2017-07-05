@@ -18,6 +18,23 @@ class SocDB extends EventEmitter {
     // stylistically, we don't want folks using 2nd and 3rd arguments
     this.query = text => this._pool.query(text)
 
+    // dedicate one client from the pool to watching for pg notifications
+    // http://bjorngylling.com/2011-04-13/postgres-listen-notify-with-node-js
+    this._pool.connect((err, client, done) => {
+      if (err) throw err
+      client.on('notification', (...args) => {
+        debug('postgres notification received:', args)
+        return this.emit('notification', ...args)
+      })
+      client.query('LISTEN watchers', (err, result) => {
+        if (err) {
+          done(err)
+          throw err
+        }
+      })
+      this.on('close', () => { done() })
+    })
+    
     this.SQL = SQL
     this.twitter = {
       consumer_key: secret.consumer_key,
@@ -38,20 +55,39 @@ class SocDB extends EventEmitter {
    *
    */
   dbInit () {
-    const all = []
+    let all = []
+    const later = []
     const dir = path.join(path.dirname(__filename), ('sql'))
     const files = fs.readdirSync(dir)
     for (let file of files) {
       if (file.endsWith('.sql')) {
         const data = fs.readFileSync(path.join(dir, file), 'utf-8')
         const cleaned = data.replace(/--.*$/gm, '')
-        for (let part of cleaned.split(';')) {
+        // split on semicolons, but NOT unless they're followed by a blank
+        // line, because we need semicolons inside stored procedures, like in
+        // notify_trigger.sql
+        for (let part of cleaned.split(';\n\n')) {
           // debug('SQL: ', part)
-          all.push(this._pool.query(part))
+          if (/^\s*create trigger/i.test(part)) {
+            // we need to make sure the triggers aren't created until
+            // after all the tables are.
+            later.push(part)
+          } else {
+            all.push(this._pool.query(part))
+          }
         }
       }
     }
-    return Promise.all(all)
+    return (
+      Promise.all(all)
+        .then(() => {
+          all = []
+          for (let part of later) {
+            all.push(this._pool.query(part))
+          }
+          return Promise.all(all)
+        })
+    )
   }
 
   start () {
@@ -120,7 +156,7 @@ class SocDB extends EventEmitter {
 let dbCounter = 1
 function tempDB () {
   const client = new pg.Client()
-  const dbname = 'temp_' + process.pid + '_' + dbCounter++
+  const dbname = 'socdb_temp_' + process.pid + '_' + dbCounter++
   let open = false
 
   function close () {
