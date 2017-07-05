@@ -42,7 +42,7 @@ class SocDB extends EventEmitter {
       })
       this.on('close', () => { done() })
     })
-    
+
     this.SQL = SQL
     this.twitter = {
       consumer_key: secret.consumer_key,
@@ -101,7 +101,7 @@ class SocDB extends EventEmitter {
   start () {
     this.startInProcessFetchers()
   }
-  
+
   startInProcessFetchers () {
     this.boss = new FetchBoss(this)
     this.fetcher = new Fetcher(this, this.boss)
@@ -123,7 +123,7 @@ class SocDB extends EventEmitter {
   }
 
   loadUser (twid) {
-    // have a ram version of this!
+    // have a ram version of this!  And reloadUser version!
     return (
       this.query(SQL`SELECT * FROM twitter_users WHERE twid=${twid}`)
         .then(res => {
@@ -160,7 +160,6 @@ class SocDB extends EventEmitter {
   }
 }
 
-
 let dbCounter = 1
 function tempDB () {
   const client = new pg.Client()
@@ -183,7 +182,7 @@ function tempDB () {
   // can't use process.on('exit', ...) because that's only for sync stuff
   // process.on('SIGINT', close)
   //    eh, postgres complains because pool is using it.
-  
+
   debug('creating temp database', dbname)
   return new Promise((resolve, reject) => {
     client.connect(err => {

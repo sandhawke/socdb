@@ -2,7 +2,7 @@
 
 const test = require('tape')
 const socdb = require('..')
-const SQL = socdb.SQL
+// const SQL = socdb.SQL
 const debug = require('debug')('test_timeline')
 
 process.on('unhandledRejection', (reason, p) => {
@@ -13,7 +13,6 @@ process.on('unhandledRejection', (reason, p) => {
 test('load current tweets', t => {
   socdb.tempDB()
     .then(db => {
-
       db.on('twitter_users', twid => {
         db.loadUser(twid)
           .then(user => {
@@ -37,13 +36,11 @@ test('load current tweets', t => {
         })
 
       // do something so that prioritize will pick it up
-
     })
 })
 
-
       /*
-      
+
       const all = []
       debug('1000')
       all.push(db.query(SQL`DELETE FROM page_scan WHERE testing IS NOT NULL`))

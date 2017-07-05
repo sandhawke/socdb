@@ -14,10 +14,9 @@ test('pg notify', t => {
   t.plan(1)
   socdb.tempDB()
     .then(db => {
-
       db.on('notification', (...args) => {
         debug('got args', args)
-        const [tablename, _, _id] = args[0].payload.split(',')
+        const [tablename] = args[0].payload.split(',')
         t.equal(tablename, 'page_scan')
         db.close()
         t.end()
@@ -27,4 +26,3 @@ test('pg notify', t => {
 `)
     })
 })
-
