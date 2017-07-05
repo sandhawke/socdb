@@ -16,6 +16,11 @@ CREATE TABLE twitter_users (
   likes_later_url varchar
 );
 
+CREATE TRIGGER twitter_users_notify
+    AFTER UPDATE OR INSERT ON twitter_users
+    FOR EACH ROW
+    EXECUTE PROCEDURE notify_trigger_twid();
+
 CREATE TABLE twitter_posts (
   twid bigint PRIMARY KEY,
   contig boolean NOT NULL,

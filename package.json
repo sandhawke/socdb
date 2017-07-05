@@ -5,7 +5,7 @@
   "main": "index.js",
   "bin": "bin/socdb",
   "scripts": {
-    "test": "standard && tap test/[a-z]*.js",
+    "test": "standard && tap --cov test/[a-z]*.js",
     "release": "npm version patch && git push --follow-tags && npm publish"
   },
   "repository": {

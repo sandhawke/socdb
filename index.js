@@ -22,9 +22,17 @@ class SocDB extends EventEmitter {
     // http://bjorngylling.com/2011-04-13/postgres-listen-notify-with-node-js
     this._pool.connect((err, client, done) => {
       if (err) throw err
-      client.on('notification', (...args) => {
-        debug('postgres notification received:', args)
-        return this.emit('notification', ...args)
+      client.on('notification', msg => {
+        debug('postgres notification received:', msg)
+        this.emit('notification', msg)
+        // assume payload is like 'twitter_users,twid,39494'
+        // where we don't actually look at 'twid'
+        const parts = msg.payload.split(',')
+        if (parts.length === 3) {
+          this.emit(parts[0], parts[2])
+        } else {
+          debug('cant parse payload', msg.payload)
+        }
       })
       client.query('LISTEN watchers', (err, result) => {
         if (err) {

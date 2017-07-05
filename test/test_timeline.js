@@ -14,6 +14,19 @@ test('load current tweets', t => {
   socdb.tempDB()
     .then(db => {
 
+      db.on('twitter_users', twid => {
+        db.loadUser(twid)
+          .then(user => {
+            debug('LOADED', user)
+            console.log(user.posts_earlier_count, 'posts fetched')
+            if (user.posts_earlier_complete) {
+              console.log('done fetching posts')
+              db.close()
+              t.assert(user.posts_earlier_count > 2000)
+              t.end()
+            }
+          })
+      })
       const secret = require('../.sandhawke-secret')
       db.query(secret)
         .then(() => {
