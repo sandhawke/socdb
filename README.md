@@ -9,13 +9,13 @@ SocDB (from "social database") is for web app developers who want:
 * The simplicity of developing apps in the browser, with no need for backend coding
 * Minimal operational responsibility, without complex server configuration, backups, maintenance, and associated liabilities
 * An ecosystem of cooperating compatible apps, so your users get increasing functionality without you having to implement features outside your own area of specialty
-* Schema-versioned data, so you can grow and change your database schema while retaing interoperability (when meaningful) with data and applications using newer and older schema versions
+* Schema-versioned data, so you can grow and change your database schema while retaing interoperability (when meaningful) with data and applications using an newer and older schema.
 
 The key idea is that instead of each multi-user application needing
 its own central servers, each user posts their activity to their
 social networks and watches for relevant posts from other people
 they're willing to interact with.  Of course, the users don't do the
-posts or the watching themselves -- they just use normal-seeming apps,
+posting or the watching themselves -- they just use normal-seeming apps,
 and the apps rely on SocDB to interact with the social media platforms.
 
 Initial platform targets:
@@ -23,15 +23,16 @@ Initial platform targets:
 * Mastodon, for being open source, decentralized, customizable
 
 This initial version of SocDB is a proof-of-concept suitable for some
-application areas, but it is not yet ready for many others. We believe
-they are all feasible, in time.  Some features not currently
-supported:
+application areas, but it is not yet ready for many others. Some
+features not currently supported:
 
 - private or access-controlled data (eg for personal health data)
 - large data sets (eg for fine-grained location traces)
 - multi-media content (eg for photo sharing)
 - high security (eg for financial transactions)
 - high speed (eg for reflex-based games)
+
+Each of those is an area for future work, as the platform improves.
 
 ## Using SocDB in Your WebApp
 

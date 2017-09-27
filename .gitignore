@@ -4,3 +4,4 @@
 events.log
 .*
 webgram-server-secrets/
+webgram-client-secrets.json

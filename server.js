@@ -13,18 +13,23 @@ const datasent = require('data-sentence')
 const IDMapper = require('../datapages/idmapper')
 const debug = require('debug')('socdb_server')
 
-
 class Server extends webgram.Server {
   constructor (config) {
     super(config)   // it copies config to this.*
+
+    this.homeContext = {}
+    this.maxSeq = 1
+    this.idmapper = new IDMapper(0) // should be replay id
+
     if (!this.msgs) {
       if (!this.db) {
         this.db = new DB(this.databaseOptions)
+        this.closeDB = true
       }
       this.msgs = this.db.view({
         name: 'socdb_msgs',
         filter: {
-          // isMessage: true      skip for postgres
+          isMessage: true, //  ? skip for postgres
           text: {type: 'string'},
           who: {type: 'id'},
           when_: {type: 'date'},   // when is sql keyword :-(
@@ -34,7 +39,7 @@ class Server extends webgram.Server {
       })
     }
 
-    this.msgs.add({text: 'hello'})
+    // this.msgs.add({text: 'hello'})
 
     this.app.get('/', async (req, res) => {
       const m = await this.msgs.lookup(req.query.id)
@@ -46,7 +51,7 @@ class Server extends webgram.Server {
     })
 
     this.msgs.on('appear', async(m) => {
-      console.log('\nFOUND MSG:', m)
+      debug('\nFOUND MSG:', m)
     })
 
     this.on('$session-active', this.session.bind(this))
@@ -60,21 +65,69 @@ class Server extends webgram.Server {
     debug('new connection', conn.sessionData)
     const cdb = new datapages.DB({localMode: true})
     const trans = new datasent.Translator()
+    debug('msgs: %o', this.msgs)
+    /* const bridge = */
+    trans.bridge(this.msgs, cdb)
+
     conn.on('view-start', async (viewspec) => {
       const v = cdb.view(viewspec)
+      // Do we need to tell bridge that the schema has just changed?
+      // At the moment it doesn't care.  Later, maybe the schema will
+      // implement on.changed?
+      /*
       v.on('appear', page => {
         conn.send('appear', viewspec.name, page)
       })
       v.on('change', (page, delta) => {
         conn.send('change', viewspec.name, page, delta)
       })
+      */
     })
     conn.on('add', async(page) => {
       // do we care?   right now, all that matters is deltas, I think.
     })
-    conn.deltaHandler = async (conn) => {
-      // ***
+
+    // changes made by this client, which will be bridged to this.msgs
+    conn.deltaHandler = async (delta) => {
+      // FROM datapages/server.js
+      debug('handling delta', delta)
+      delta.who = conn.sessionData._sessionID
+      delta.when = new Date()
+      delta.seq = ++this.maxSeq
+
+      const idmap = this.idmapper.fromContext(conn, delta.targetLocalID)
+      delta.targetLocalID = idmap.intoContext(this.homeContext)
+      
+      debug('premap value:', delta.value)
+      delta.value = this.idmapper.mapTree(conn, this.homeContext, delta.value)
+      debug('........post:', delta.value)
+            
+      cdb.deltas.push(delta)  // do we need this?   bad encapsulation
+      cdb.applyDeltaLocally(delta)
+      // maybe that's it...?
     }
+
+    // changes made by other clients, seen via bridge from this.msgs
+    cdb.on('change', (page, delta) => {
+      debug('maybe sending out delta %O', delta)
+      // dup'ing code from datapages/client.js  :-(
+      const {key, value} = delta
+      if (key.startsWith('__')) return
+      debug('sending out delta %O', delta)
+
+      // needs target ID
+      
+      conn.send('delta', delta)
+    })
+  }
+
+  async close () {
+    debug('close() called')
+    if (this.closeDB) {
+      debug('closing DB')
+      await this.db.close()
+    }
+    await super.close()
   }
 
 }
@@ -198,13 +251,6 @@ class Server extends webgram.Server {
     this.closeDB = true
   }
 
-  async close () {
-    if (this.closeDB) {
-      debug('closing DB')
-      await this.deltaDB.close()
-    }
-    await super.close()
-  }
 
   bootReplay () {
     return new Promise((resolve, reject) => {
