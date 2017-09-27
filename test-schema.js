@@ -3,13 +3,16 @@
 const test = require('tape')
 const socdb = require('./server')
 const datapages = require('datapages')
-const datasent = require('data-sentence')
+// const datasent = require('data-sentence')
 const debug = require('debug')('socdb_test')
 const atEnd = require('tape-end-hook')
 
 test.skip(async (t) => {
-  setTimeout(() => {t.end()}, 5000)
+  setTimeout(() => { t.end() }, 5000)
 })
+
+/* 
+  needs a different place to put its levelDB files
 
 test(async (t) => {
   const server = new socdb.Server({port: 6001})
@@ -25,9 +28,9 @@ test('does tape get here when server is stopped?', async (t) => {
   t.pass()
   t.end()
 })
+*/
 
-
-test.skip(async (t) => {
+test(async (t) => {
   t.plan(10)
   const server = new socdb.Server({port: 6001})
   await server.start()
@@ -77,4 +80,3 @@ test.skip(async (t) => {
   // setTimeout(end, 2000)
   debug('returning')
 })
-

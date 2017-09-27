@@ -70,7 +70,8 @@ class Server extends webgram.Server {
     trans.bridge(this.msgs, cdb)
 
     conn.on('view-start', async (viewspec) => {
-      const v = cdb.view(viewspec)
+      // const v =
+      cdb.view(viewspec)
       // Do we need to tell bridge that the schema has just changed?
       // At the moment it doesn't care.  Later, maybe the schema will
       // implement on.changed?
@@ -97,11 +98,11 @@ class Server extends webgram.Server {
 
       const idmap = this.idmapper.fromContext(conn, delta.targetLocalID)
       delta.targetLocalID = idmap.intoContext(this.homeContext)
-      
+
       debug('premap value:', delta.value)
       delta.value = this.idmapper.mapTree(conn, this.homeContext, delta.value)
       debug('........post:', delta.value)
-            
+
       cdb.deltas.push(delta)  // do we need this?   bad encapsulation
       cdb.applyDeltaLocally(delta)
       // maybe that's it...?
@@ -111,12 +112,12 @@ class Server extends webgram.Server {
     cdb.on('change', (page, delta) => {
       debug('maybe sending out delta %O', delta)
       // dup'ing code from datapages/client.js  :-(
-      const {key, value} = delta
+      const {key} = delta
       if (key.startsWith('__')) return
       debug('sending out delta %O', delta)
 
       // needs target ID
-      
+
       conn.send('delta', delta)
     })
   }
@@ -129,7 +130,6 @@ class Server extends webgram.Server {
     }
     await super.close()
   }
-
 }
 
 /*
@@ -250,7 +250,6 @@ class Server extends webgram.Server {
     }
     this.closeDB = true
   }
-
 
   bootReplay () {
     return new Promise((resolve, reject) => {
