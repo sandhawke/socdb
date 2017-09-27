@@ -11,20 +11,30 @@ const webgram = require('webgram')
 const datapages = require('datapages')
 const datasent = require('data-sentence')
 const IDMapper = require('../datapages/idmapper')
+const debugModule = require('debug')
 const debug = require('debug')('socdb_server')
+
+let connCount = 0
 
 class Server extends webgram.Server {
   constructor (config) {
     super(config)   // it copies config to this.*
 
     this.homeContext = {}
-    this.maxSeq = 1
-    this.idmapper = new IDMapper(0) // should be replay id
+
+    const maxID = 1 // needs to come from storage
+    
+    this.maxSeq = maxID
+    this.idmapper = new IDMapper(maxID)
+
 
     if (!this.msgs) {
       if (!this.db) {
+        debug('opening DB, using postgres')
         this.db = new DB(this.databaseOptions)
         this.closeDB = true
+      } else {
+        debug('Thanks for making the DB for us')
       }
       this.msgs = this.db.view({
         name: 'socdb_msgs',
@@ -51,7 +61,7 @@ class Server extends webgram.Server {
     })
 
     this.msgs.on('appear', async(m) => {
-      debug('\nFOUND MSG:', m)
+      debug('new message visible in msgs: %o:', m)
     })
 
     this.on('$session-active', this.session.bind(this))
@@ -62,27 +72,57 @@ class Server extends webgram.Server {
   }
 
   session (conn) {
-    debug('new connection', conn.sessionData)
+    conn.debug = debugModule('socdb_server_conn_' + ++connCount)
+    conn.debug('new connection, _sessionID=%s', conn.sessionData._sessionID)
     const cdb = new datapages.DB({localMode: true})
     const trans = new datasent.Translator()
-    debug('msgs: %o', this.msgs)
+    // conn.debug('msgs: %o', this.msgs)
     /* const bridge = */
     trans.bridge(this.msgs, cdb)
 
     conn.on('view-start', async (viewspec) => {
-      // const v =
-      cdb.view(viewspec)
+      conn.debug('view-start %O', viewspec)
+
+      // TODO idmapper mapTree on each of the .values of the
+      // clausified filter expressions, so we can have prop=obj
+      
+      const v = cdb.view(viewspec)
+      
       // Do we need to tell bridge that the schema has just changed?
       // At the moment it doesn't care.  Later, maybe the schema will
       // implement on.changed?
-      /*
+
+
+      const sendDelta = (target, key, who, when) => {
+        if (key.startsWith('__')) return
+        let value = target[key]
+        const targetLocalId = (this.idmapper
+                               .fromContext(this.homeContext, target)
+                               .intoContext(conn))
+        value = this.idmapper.mapTree(this.homeContext, conn, value)
+        const viewName = viewspec.name
+        const delta = { targetLocalId, key, value, who, when, viewName }
+        conn.debug('sending delta %o', delta)
+        conn.send('delta', delta)
+      }
+        
+      // At this point we suddenly want to send the object and its
+      // deltas because they're in-view.  But we don't have access to
+      // those deltas, do we?  Not unless we kept a provenance trace
+      // in building up the object...
+
       v.on('appear', page => {
-        conn.send('appear', viewspec.name, page)
+        conn.debug('handling APPEAR %o', page)
+        for (const key of Object.keys(page)) {
+          sendDelta(page, key)  /* TODO find the other prov data! */
+        }
       })
+
       v.on('change', (page, delta) => {
-        conn.send('change', viewspec.name, page, delta)
+        conn.debug('handling DELTA %o %O', page, delta)
+        sendDelta(page, delta.key, delta.who, delta.when)
       })
-      */
+
     })
     conn.on('add', async(page) => {
       // do we care?   right now, all that matters is deltas, I think.
@@ -91,7 +131,7 @@ class Server extends webgram.Server {
     // changes made by this client, which will be bridged to this.msgs
     conn.deltaHandler = async (delta) => {
       // FROM datapages/server.js
-      debug('handling delta', delta)
+      conn.debug('handling delta %o', delta)
       delta.who = conn.sessionData._sessionID
       delta.when = new Date()
       delta.seq = ++this.maxSeq
@@ -99,27 +139,31 @@ class Server extends webgram.Server {
       const idmap = this.idmapper.fromContext(conn, delta.targetLocalID)
       delta.targetLocalID = idmap.intoContext(this.homeContext)
 
-      debug('premap value:', delta.value)
+      conn.debug('premap value:', delta.value)
       delta.value = this.idmapper.mapTree(conn, this.homeContext, delta.value)
-      debug('........post:', delta.value)
+      conn.debug('........post:', delta.value)
 
       cdb.deltas.push(delta)  // do we need this?   bad encapsulation
       cdb.applyDeltaLocally(delta)
       // maybe that's it...?
     }
 
+/*
+  DONT send things unless they're within some view 
+
     // changes made by other clients, seen via bridge from this.msgs
     cdb.on('change', (page, delta) => {
-      debug('maybe sending out delta %O', delta)
+      conn.debug('maybe sending out delta %O', delta)
       // dup'ing code from datapages/client.js  :-(
       const {key} = delta
       if (key.startsWith('__')) return
-      debug('sending out delta %O', delta)
+      conn.debug('sending out delta %O', delta)
 
       // needs target ID
 
       conn.send('delta', delta)
     })
+*/
   }
 
   async close () {
