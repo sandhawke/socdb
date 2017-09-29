@@ -64,7 +64,11 @@ class Server extends webgram.Server {
       debug('new message visible in msgs: %o:', m)
     })
 
-    this.on('$session-active', this.session.bind(this))
+    // might be nice if the hooks worked together to give us $ready,
+    // or sessions hid $connect until the sessions was active.
+    const readyEvent = this.useSessions ? '$session-active' : '$connect'
+    debug('watching for connections using %j', readyEvent)
+    this.on(readyEvent, this.session.bind(this))
 
     this.answer.delta = async (conn, delta) => {
       return conn.deltaHandler(delta)
@@ -72,6 +76,8 @@ class Server extends webgram.Server {
   }
 
   session (conn) {
+    if (!this.useSessions) conn.sessionData = {_sessionID: 'testmode'}
+    
     conn.debug = debugModule('socdb_server_conn_' + ++connCount)
     conn.debug('new connection, _sessionID=%s', conn.sessionData._sessionID)
     const cdb = new datapages.DB({localMode: true})
