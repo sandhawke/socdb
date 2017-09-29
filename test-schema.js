@@ -7,97 +7,24 @@ const datapages = require('datapages')
 const debug = require('debug')('socdb_test')
 const atEnd = require('tape-end-hook')
 
-test.skip(async (t) => {
-  setTimeout(() => { t.end() }, 5000)
-})
+// helper functions
 
-/* 
-  needs a different place to put its levelDB files
-
-test(async (t) => {
-  const server = new socdb.Server({port: 6001})
-  await server.start()
-  t.ok(true, 'just checking')
-  atEnd(t, () => server.close())
-  debug('started')
-  t.end()
-  debug('t.end() returned')
-})
-
-test('does tape get here when server is stopped?', async (t) => {
-  t.pass()
-  t.end()
-})
-*/
-
-test(async (t) => {
-  t.plan(2)
+async function newServer (t) {
   const serverDB = new datapages.InMem()
-  const server = new socdb.Server({db: serverDB, useSessions:false})
+  // atEnd(t, () => serverDB.close())   InMem doesn't need close
+  const server = new socdb.Server({db: serverDB, useSessions: false})
+  atEnd(t, () => server.close())
   await server.start()
   debug('started')
+  return server
+}
 
-  const todoSchema = {
-    name: 'todo',
-    filter: {
-      isToDo: true,
-      desc: {type: 'string', required: true}
-    },
-    defs: [
-      'item for my to-do list: [desc]'
-    ]
-  }
-
-  /*
-  const altTodoSchema = {
-    name: 'todo',
-    filter: {
-      isToDoItem: true,
-      description: {type: 'string', required: true}
-    },
-    defs: [
-      'item for my to-do list: [desc]'
-    ]
-  }
-
-  const db2 = new datapages.DB({serverAddress: server.address})
-  const v2 = db2.view(altTodoSchema)
-  v2.on('appear', page => {
-    console.log('\n\n\n\n\n\n\nappear REALLY!!!', page)
-    t.equal(page.description, 'get this thing working!')
-    t.equal(page.isToDoItem, true)
-    end()
-  })
-
-  await sleep(100)
-  */
-
+function newClient (t, server) {
   const db = new datapages.DB({serverAddress: server.address,
                                useSessions: false})
-  db.view(todoSchema)
-  db.add({isToDo: true, desc: 'get this thing working!'})
-  await sleep(100)
-  const messages = Array.from(serverDB)
-  console.log('MSG:', messages)
-  t.deepEqual(messages, [
-    { isMessage: true,
-      text: 'item for my to-do list: "get this thing working!"',
-      __localID: -1 }
-  ])
-
-  end()
-
-  async function end () {
-    debug('ending, tying to stop server...')
-    await db.close()
-    await server.stop()
-    debug('stopped')
-    t.pass()
-    t.end()
-  }
-  // setTimeout(end, 2000)
-  debug('returning')
-})
+  atEnd(t, () => db.close())
+  return db
+}
 
 function sleep (ms) {
   return new Promise(resolve => {
@@ -105,13 +32,10 @@ function sleep (ms) {
   })
 }
 
-test(async (t) => {
-  t.plan(2)
-  const serverDB = new datapages.InMem()
-  const server = new socdb.Server({db: serverDB, useSessions: false})
-  await server.start()
-  debug('started')
+// real tests
 
+test('added object shows up as message in db', async (t) => {
+  t.plan(1)
   const todoSchema = {
     name: 'todo',
     filter: {
@@ -122,6 +46,22 @@ test(async (t) => {
       'item for my to-do list: [desc]'
     ]
   }
+
+  const server = await newServer(t)
+  const db = newClient(t, server)
+  db.view(todoSchema)
+  db.add({isToDo: true, desc: 'get this thing working!'})
+  await sleep(100)
+  const messages = Array.from(server.db)
+  // console.log('MSG:', messages)
+  t.deepEqual(messages, [
+    { isMessage: true,
+      text: 'item for my to-do list: "get this thing working!"',
+      __localID: -1 }
+  ])
+
+  t.end()
+})
 
   /*
   const altTodoSchema = {
@@ -146,29 +86,3 @@ test(async (t) => {
 
   await sleep(100)
   */
-
-  const db = new datapages.DB({serverAddress: server.address, useSessions: false})
-  db.view(todoSchema)
-  db.add({isToDo: true, desc: 'get this thing working!'})
-  await sleep(100)
-  const messages = Array.from(serverDB)
-  console.log('MSG:', messages)
-  t.deepEqual(messages, [
-    { isMessage: true,
-      text: 'item for my to-do list: "get this thing working!"',
-      __localID: -1 }
-  ])
-
-  end()
-
-  async function end () {
-    debug('ending, tying to stop server...')
-    await db.close()
-    await server.stop()
-    debug('stopped')
-    t.pass()
-    t.end()
-  }
-  // setTimeout(end, 2000)
-  debug('returning')
-})
