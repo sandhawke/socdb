@@ -116,3 +116,10 @@ Really, we use it for several different things:
 
 4. A set of application-specific tables, for whatever the app wants.  Or maybe we'll just do these as views, or just in memory, or something.   But it could be more postgres tables.
 
+## Credits and Disclaimer
+
+This material is based upon work supported by the National Science
+Foundation under Grant No. 1313789.  Any opinions, findings, and
+conclusions or recommendations expressed in this material are those of
+the author(s) and do not necessarily reflect the views of the National
+Science Foundation.
